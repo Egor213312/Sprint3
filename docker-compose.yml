@@ -1,0 +1,13 @@
+version: '3'
+services:
+  calc_service:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - LOG_LEVEL=info
+      - COMPUTING_POWER=4
+      - TIME_ADDITION_MS=1000
+      - TIME_SUBTRACTION_MS=1000
+      - TIME_MULTIPLICATIONS_MS=1000
+      - TIME_DIVISIONS_MS=1000
