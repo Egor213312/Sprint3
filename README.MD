@@ -20,9 +20,10 @@
 2. Клонируйте репозиторий:
    ```bash
    git clone https://github.com/Egor213312/Sprint3.git
-   cd Sprint3
+
 3. Установите зависимости:   
     go mod tidy
+
 4. Запустите сервер:
     go run ./cmd/calc_service/main.go
 
@@ -33,7 +34,9 @@
 ## **Тестирование с помощью Postman**
 
 1. Добавление выражения
+
 **В postman создайте первый запрос**
+
 Метод: POST
 
 URL: http://localhost:8080/api/v1/calculate
@@ -53,7 +56,9 @@ URL: http://localhost:8080/api/v1/calculate
 }
 
 2. Получение списка выражений
+
 **В postman создайте второй запрос**
+
 Метод: GET
 
 URL: http://localhost:8080/api/v1/expressions
@@ -73,7 +78,9 @@ URL: http://localhost:8080/api/v1/expressions
 }
 
 3. Получение выражения по ID
+
 **В postman создайте третий запрос**
+
 Метод: GET
 
 URL: http://localhost:8080/api/v1/expressions/{id}
@@ -88,6 +95,8 @@ URL: http://localhost:8080/api/v1/expressions/{id}
     "result": 6
   }
 }
+
+
 ![alt text](image-1.png)
 
 ---
@@ -139,4 +148,5 @@ http://localhost:8080/api/v1/expressions/999
 ## Библиотеки:
 
 github.com/Knetic/govaluate — для вычисления арифметических выражений.
+
 github.com/google/uuid — для генерации уникальных ID.
