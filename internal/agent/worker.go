@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Egor213312/Sprint3/internal/models" // Импорт для использования Task
+	"github.com/Egor213312/Sprint3/internal/models"
 	"github.com/Egor213312/Sprint3/pkg/config"
 	"github.com/Egor213312/Sprint3/pkg/logger"
 )
@@ -40,7 +40,7 @@ func (a *Agent) worker() {
 func (a *Agent) getTask() *models.Task {
 	resp, err := http.Get("http://localhost:8080/internal/task")
 	if err != nil {
-		a.log.Error("Failed to get task: " + err.Error()) // Исправлено
+		a.log.Error("Failed to get task: " + err.Error())
 		return nil
 	}
 	defer resp.Body.Close()
@@ -51,7 +51,7 @@ func (a *Agent) getTask() *models.Task {
 
 	var task models.Task
 	if err := json.NewDecoder(resp.Body).Decode(&task); err != nil {
-		a.log.Error("Failed to decode task: " + err.Error()) // Исправлено
+		a.log.Error("Failed to decode task: " + err.Error())
 		return nil
 	}
 
@@ -83,12 +83,12 @@ func (a *Agent) sendResult(taskID string, result float64) {
 
 	resp, err := http.Post("http://localhost:8080/internal/task", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		a.log.Error("Failed to send result: " + err.Error()) // Исправлено
+		a.log.Error("Failed to send result: " + err.Error())
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		a.log.Error("Failed to send result, status code: " + resp.Status) // Исправлено
+		a.log.Error("Failed to send result, status code: " + resp.Status)
 	}
 }

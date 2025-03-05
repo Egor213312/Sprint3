@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/Egor213312/Sprint3/internal/models" // Импорт для использования Expression и Task
+	"github.com/Egor213312/Sprint3/internal/models"
 	"github.com/Egor213312/Sprint3/pkg/config"
 	"github.com/Egor213312/Sprint3/pkg/logger"
+	"github.com/Knetic/govaluate" // Импорт библиотеки для вычисления выражений
 	"github.com/google/uuid"
 )
 
 var (
-	expressions = make(map[string]models.Expression) // Используем models.Expression
-	tasks       = make(map[string]models.Task)       // Используем models.Task
+	expressions = make(map[string]models.Expression)
 	mu          sync.Mutex
 )
 
@@ -35,12 +35,25 @@ func (o *Orchestrator) HandleCalculate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Проверяем корректность выражения
+	if !isValidExpression(req.Expression) {
+		http.Error(w, "Invalid expression", http.StatusUnprocessableEntity)
+		return
+	}
+
+	// Вычисляем выражение
+	result, err := evaluateExpression(req.Expression)
+	if err != nil {
+		http.Error(w, "Failed to evaluate expression", http.StatusUnprocessableEntity)
+		return
+	}
+
 	id := uuid.New().String()
 	mu.Lock()
-	expressions[id] = models.Expression{ // Используем models.Expression
+	expressions[id] = models.Expression{
 		ID:     id,
-		Status: "pending",
-		Result: 0,
+		Status: "completed",
+		Result: result,
 	}
 	mu.Unlock()
 
@@ -52,7 +65,7 @@ func (o *Orchestrator) HandleGetExpressions(w http.ResponseWriter, r *http.Reque
 	mu.Lock()
 	defer mu.Unlock()
 
-	var exprs []models.Expression // Используем models.Expression
+	var exprs []models.Expression
 	for _, expr := range expressions {
 		exprs = append(exprs, expr)
 	}
@@ -76,40 +89,36 @@ func (o *Orchestrator) HandleGetExpressionByID(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(map[string]interface{}{"expression": expr})
 }
 
-func (o *Orchestrator) HandleTask(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		mu.Lock()
-		defer mu.Unlock()
+// evaluateExpression вычисляет значение выражения
+func evaluateExpression(expression string) (float64, error) {
+	expr, err := govaluate.NewEvaluableExpression(expression)
+	if err != nil {
+		return 0, err
+	}
 
-		for _, task := range tasks {
-			if task.Status == "pending" {
-				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(task)
-				return
-			}
-		}
+	result, err := expr.Evaluate(nil)
+	if err != nil {
+		return 0, err
+	}
 
-		w.WriteHeader(http.StatusNotFound)
-	} else if r.Method == http.MethodPost {
-		var result struct {
-			ID     string  `json:"id"`
-			Result float64 `json:"result"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
-			http.Error(w, "Invalid request body", http.StatusUnprocessableEntity)
-			return
-		}
+	return result.(float64), nil
+}
 
-		mu.Lock()
-		defer mu.Unlock()
-
-		if task, exists := tasks[result.ID]; exists {
-			task.Status = "completed"
-			task.Result = result.Result // Теперь поле Result доступно
-			tasks[result.ID] = task
-			w.WriteHeader(http.StatusOK)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
+// isValidExpression проверяет корректность выражения
+func isValidExpression(expression string) bool {
+	// Простая проверка на наличие некорректных символов
+	for _, char := range expression {
+		if !isValidCharacter(char) {
+			return false
 		}
 	}
+	return true
+}
+
+// isValidCharacter проверяет, является ли символ допустимым
+func isValidCharacter(char rune) bool {
+	// Разрешенные символы: цифры, операторы (+,-,*,/), пробелы, скобки
+	return (char >= '0' && char <= '9') ||
+		char == '+' || char == '-' || char == '*' || char == '/' ||
+		char == ' ' || char == '(' || char == ')'
 }
